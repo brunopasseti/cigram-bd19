@@ -1,22 +1,21 @@
+
 const express = require('express')
 const cors = require('express-cors')
-require('dotenv').config()
+const bodyparser = require('body-parser')
 const { Client } = require('pg')
-const client = new Client({
-    connectionString:process.env.DB_CS,
-    ssl:true
-});
+
+const user = require("./functions/user.js");
+
+
 const app = express();
 const port = 3333;
-client.connect().catch((err)=> console.log(err))
+const mountRoutes = require('./routes')
 
-client.query('SELECT * from topico', (err, res) => {
-    if(err) console.log(err);
-    else{
-        console.log(res.rows);
-    }
-})
 app.use(cors());
+app.use(bodyparser.json());
+app.use(bodyparser.urlencoded({extended:true}));
+mountRoutes(app)
+
 
 app.listen(port, () => console.log(`Starting server on port ${port}`));
 
