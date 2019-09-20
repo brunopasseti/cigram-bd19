@@ -4,8 +4,6 @@ const cors = require('express-cors')
 const bodyparser = require('body-parser')
 const { Client } = require('pg')
 
-const user = require("./functions/user.js");
-
 
 const app = express();
 const port = 3333;
