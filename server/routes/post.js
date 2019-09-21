@@ -1,7 +1,7 @@
 const Router = require('express-promise-router')
 const db = require('../db')
 const uuidv1 = require('uuid/v1')
-const topico = require("./topicos")
+const topico = require("../util/topicos")
 const router = new Router()
 
 module.exports = router
@@ -54,6 +54,30 @@ router.get("/getposts", async(req,res) =>{
     });
 });
 
-
-
-
+router.post('/comentpost', async  (req, res) => {
+    if(req.session.user){
+        user = req.body;
+        date = new Date();
+        try {
+            const newComent = "INSERT INTO comentario (idComent, idPost, idComentador, texto, datestamp) VALUES ($1, $2, $3, $4, $5)";
+            values = [uuidv1(), user.idPost,req.session.userId, user.texto, date];
+    
+            const  post = await db.query(newPost, values); 
+            tokens = user.texto.split(" ");
+            for(i of tokens){
+                if(i[0]== '#'){
+                    const topic = await topico.getTopic(i);
+                    if(!Array.isArray(topic.rows) || !topic.rows.length){
+                        await topico.createTopic(i);
+                    }
+                    await topico.createTopicComent(i, values[0])
+                }
+            }
+            res.send("Comentario criado com sucesso."); return;
+        } catch (error) {
+            res.send(error); return;
+        } 
+    }else{
+        res.send("Not logged in"); return;
+    } 
+})
