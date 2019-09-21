@@ -13,7 +13,7 @@ router.post("/login", async (req, res) => {
             throw new Error("User not found"); return
         };
         const user = row.rows[0];
-        if(req.body.username == user.username && req.body.password == user.senha){
+        if(req.body.username == user.username && req.body.senha == user.senha){
             req.session.user = user.username;
             req.session.userId = user.id;
             res.send("Logged in")
