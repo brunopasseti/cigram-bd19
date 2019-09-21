@@ -11,8 +11,10 @@ router.post('/', async  (req, res) => {
         user = req.body;
         date = new Date();
         try {
+            const idPost = uuidv1();
+            const idFoto = uuidv1();
             const newPost = "INSERT INTO post (idPost, idUser, idFoto, texto, datestamp) VALUES ($1, $2, $3, $4, $5)";
-            values = [uuidv1(), req.session.userId, user.idFoto, user.texto, date];
+            values = [idPost, req.session.userId, idFoto, user.texto, date];
     
             const  post = await db.query(newPost, values); 
             tokens = user.texto.split(" ");
@@ -25,7 +27,12 @@ router.post('/', async  (req, res) => {
                     await topico.createTopicPost(i, values[0])
                 }
             }
-            res.send("Post criado com sucesso."); return;
+            const photoPath = "post/foto/" + idFoto + ".png";
+            const newPost2 = "INSERT INTO foto (idFoto, urlFoto, idPost) VALUES ($1, $2, $3)";
+            values2 = [idFoto, photoPath, idPost];
+    
+            const  post2 = await db.query(newPost2, values2); 
+            res.send("Post e foto criados com sucesso."); return;
         } catch (error) {
             res.send(error); return;
         } 
@@ -91,7 +98,7 @@ router.get("/coments", async(req,res) =>{
         };
      //   const user = row.rows[0];
 
-        const query = "SELECT * FROM comentario WHERE idPost = $1 ORDER BY datestamp DESC"
+        const query = "SELECT * FROM comentario WHERE idPost = $1"
         db.query(query, [data.idPost] , []).then((row) => res.send(row.rows)).catch((err)=>{
             res.send(`${err}`);
             console.log(err);
