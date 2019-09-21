@@ -1,7 +1,7 @@
 const Router = require('express-promise-router')
 const db = require('../db')
 const uuidv1 = require('uuid/v1')
-
+const topico = require("./topicos")
 const router = new Router()
 
 module.exports = router
@@ -18,16 +18,11 @@ router.post('/createpost', async  (req, res) => {
             tokens = user.texto.split(" ");
             for(i of tokens){
                 if(i[0]== '#'){
-                    const  getTopic = "SELECT * FROM topico WHERE hashtag = $1";
-                    const topic = await db.query(getTopic, [i]);
-
+                    const topic = await topico.getTopic(i);
                     if(!Array.isArray(topic.rows) || !topic.rows.length){
-                        const createTopic = "INSERT INTO topico (hashtag) VALUES ($1)";
-                        const {newTopic} = await db.query(createTopic, [i]);
+                        await topico.createTopic(i);
                     }
-
-                    const topicoPost = "INSERT INTO topico_post (idPost, hashtag) VALUES ($1, $2)";
-                    const {newTopicoPost} = await db.query(topicoPost, [values[0], i]);
+                    await topico.createTopicPost(i, values[0])
                 }
             }
             res.send("Post criado com sucesso."); return;
