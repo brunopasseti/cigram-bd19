@@ -22,6 +22,7 @@ router.get('/:username', async  (req, res) => {
 
     const query = `SELECT * FROM usuario WHERE username = '${username}';`;
     await db.query(query, []).then((row) => {
+        // Checking if array is empty:
         if(!Array.isArray(row.rows) || !row.rows.length) {
             throw new Error("User not found"); return
         };
