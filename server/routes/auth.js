@@ -15,6 +15,7 @@ router.post("/login", async (req, res) => {
         const user = row.rows[0];
         if(req.body.username == user.username && req.body.password == user.senha){
             req.session.user = user.username;
+            req.session.userId = user.id;
             res.send("Logged in")
         }else{
             throw new Error("Wrong credentials"); return;
