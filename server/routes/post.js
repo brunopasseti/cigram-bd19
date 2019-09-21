@@ -6,7 +6,7 @@ const router = new Router()
 
 module.exports = router
 
-router.post('/createpost', async  (req, res) => {
+router.post('/', async  (req, res) => {
     if(req.session.user){
         user = req.body;
         date = new Date();
@@ -34,7 +34,7 @@ router.post('/createpost', async  (req, res) => {
     }
 })
 
-router.get("/getposts", async(req,res) =>{
+router.get('/', async(req,res) =>{
     data = req.body;
     const command = "SELECT * FROM usuario WHERE username = $1";
     
@@ -54,7 +54,7 @@ router.get("/getposts", async(req,res) =>{
     });
 });
 
-router.post('/comentpost', async  (req, res) => {
+router.post('/coment', async  (req, res) => {
     if(req.session.user){
         user = req.body;
         date = new Date();
@@ -81,7 +81,7 @@ router.post('/comentpost', async  (req, res) => {
         res.send("Not logged in"); return;
     } 
 })
-router.get("/getcoments", async(req,res) =>{
+router.get("/coments", async(req,res) =>{
     data = req.body;
     const command = "SELECT * FROM post WHERE idPost = $1";
     
