@@ -27,7 +27,7 @@ router.get('/:username', async  (req, res) => {
             throw new Error("User not found"); return
         };
         let {username, nomereal, biografia, privacidade} =  row.rows[0]
-        if(privacidade == true)
+        if(req.session.user !== username && privacidade == true)
             res.send({username, privacidade:true});
         let result = {username, nomereal, biografia, privacidade};
         res.send(result);
