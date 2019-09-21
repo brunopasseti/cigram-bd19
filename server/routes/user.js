@@ -12,6 +12,25 @@ router.post('/createuser', async  (req, res) => {
     values = [uuidv1(), user.email, user.username, user.senha, user.nomereal, user.biografia, user.privacidade];
 
     await db.query(command, values).then(() => res.send("User created")).catch((err) => {
-        res.send(`Error on creating users`);
+        res.send(`Error when creating users`)
+        console.log(err);
+    });
+})
+
+router.get('/:username', async  (req, res) => {
+    const { username } = req.params;
+
+    const query = `SELECT * FROM usuario WHERE username = '${username}';`;
+    await db.query(query, []).then((row) => {
+        if(!Array.isArray(row.rows) || !row.rows.length) {
+            throw new Error("User not found"); return
+        };
+        let {username, nomereal, biografia, privacidade} =  row.rows[0]
+        if(privacidade == true)
+            res.send({username, privacidade:true});
+        let result = {username, nomereal, biografia, privacidade};
+        res.send(result);
+    }).catch((err) => {
+        res.send(`${err}`);
     });
 })
