@@ -80,7 +80,7 @@ router.post('/coment', async  (req, res) => {
                     await topico.createTopicComent(i, values[0])
                 }
             }
-            res.send("Comentario criado com sucesso."); return;
+            res.send("Comentário criado com sucesso."); return;
         } catch (error) {
             res.send(error); return;
         } 
