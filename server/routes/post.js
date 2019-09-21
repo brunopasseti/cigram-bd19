@@ -59,8 +59,6 @@ router.get("/getposts", async(req,res) =>{
     });
 });
 
-router.get("/:postId", async (req, res) => {
-    
-});
+
 
 
