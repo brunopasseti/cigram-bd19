@@ -83,11 +83,11 @@ router.post('/comentpost', async  (req, res) => {
 })
 router.get("/getcoments", async(req,res) =>{
     data = req.body;
-    const command = "SELECT * FROM usuario WHERE username = $1";
+    const command = "SELECT * FROM post WHERE idPost = $1";
     
-    db.query(command, [req.session.userId],[]).then((row) => { 
+    db.query(command, [data.idPost],[]).then((row) => { 
         if(!Array.isArray(row.rows) || !row.rows.length) {
-            throw new Error("User not found"); return
+            throw new Error("Post not found"); return
         };
      //   const user = row.rows[0];
 
