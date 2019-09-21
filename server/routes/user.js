@@ -6,7 +6,7 @@ const router = new Router()
 
 module.exports = router
 
-router.post('/createuser', async  (req, res) => {
+router.post('/', async  (req, res) => {
     user = req.body;
     command = "INSERT INTO usuario (ID, email, username, senha, nomereal, biografia, privacidade) VALUES ($1, $2, $3, $4, $5, $6, $7)";
     values = [uuidv1(), user.email, user.username, user.senha, user.nomereal, user.biografia, user.privacidade];
@@ -16,7 +16,7 @@ router.post('/createuser', async  (req, res) => {
     });
 })
 
-router.get('/:username', async  (req, res) => {
+router.get('/', async  (req, res) => {
     const { username } = req.params;
 
     const query = `SELECT * FROM usuario WHERE username = '${username}';`;
