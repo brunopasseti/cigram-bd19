@@ -12,8 +12,7 @@ router.post('/createuser', async  (req, res) => {
     values = [uuidv1(), user.email, user.username, user.senha, user.nomereal, user.biografia, user.privacidade];
 
     await db.query(command, values).then(() => res.send("User created")).catch((err) => {
-        res.send(`Error when creating users`)
-        console.log(err);
+        res.status(400).send(`Error when creating users`)
     });
 })
 
