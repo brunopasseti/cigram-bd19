@@ -81,3 +81,22 @@ router.post('/comentpost', async  (req, res) => {
         res.send("Not logged in"); return;
     } 
 })
+router.get("/getcoments", async(req,res) =>{
+    data = req.body;
+    const command = "SELECT * FROM usuario WHERE username = $1";
+    
+    db.query(command, [req.session.userId],[]).then((row) => { 
+        if(!Array.isArray(row.rows) || !row.rows.length) {
+            throw new Error("User not found"); return
+        };
+     //   const user = row.rows[0];
+
+        const query = "SELECT * FROM comentario WHERE idPost = $1 ORDER BY datestamp DESC"
+        db.query(query, [data.idPost] , []).then((row) => res.send(row.rows)).catch((err)=>{
+            res.send(`${err}`);
+            console.log(err);
+        })
+    }).catch((err) => {
+        res.send(`${err}`);
+    });
+});
