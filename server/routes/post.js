@@ -6,7 +6,7 @@ const router = new Router()
 
 module.exports = router
 
-router.post('/createpost', async  (req, res) => {
+router.post('/', async  (req, res) => {
     if(req.session.user){
         user = req.body;
         date = new Date();
@@ -34,7 +34,7 @@ router.post('/createpost', async  (req, res) => {
     }
 })
 
-router.get("/getposts", async(req,res) =>{
+router.get('/', async(req,res) =>{
     data = req.body;
     const command = "SELECT * FROM usuario WHERE username = $1";
     
@@ -54,7 +54,7 @@ router.get("/getposts", async(req,res) =>{
     });
 });
 
-router.post('/comentpost', async  (req, res) => {
+router.post('/coment', async  (req, res) => {
     if(req.session.user){
         user = req.body;
         date = new Date();
@@ -81,3 +81,22 @@ router.post('/comentpost', async  (req, res) => {
         res.send("Not logged in"); return;
     } 
 })
+router.get("/coments", async(req,res) =>{
+    data = req.body;
+    const command = "SELECT * FROM post WHERE idPost = $1";
+    
+    db.query(command, [data.idPost],[]).then((row) => { 
+        if(!Array.isArray(row.rows) || !row.rows.length) {
+            throw new Error("Post not found"); return
+        };
+     //   const user = row.rows[0];
+
+        const query = "SELECT * FROM comentario WHERE idPost = $1 ORDER BY datestamp DESC"
+        db.query(query, [data.idPost] , []).then((row) => res.send(row.rows)).catch((err)=>{
+            res.send(`${err}`);
+            console.log(err);
+        })
+    }).catch((err) => {
+        res.send(`${err}`);
+    });
+});
