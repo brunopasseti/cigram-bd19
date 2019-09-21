@@ -4,7 +4,7 @@ const cors = require('express-cors')
 const bodyparser = require('body-parser')
 const { Client } = require('pg')
 
-teste de commit
+//teste de commit
 const app = express();
 const port = 3333;
 const mountRoutes = require('./routes')
