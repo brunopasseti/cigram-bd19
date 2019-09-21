@@ -1,5 +1,4 @@
 const db = require('../db')
-const router = new Router()
 
 module.exports = {
     getTopic : async function(hashtag){

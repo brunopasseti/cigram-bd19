@@ -17,15 +17,15 @@ router.post('/', async  (req, res) => {
             values = [idPost, req.session.userId, idFoto, user.texto, date];
     
             const  post = await db.query(newPost, values); 
-            tokens = user.texto.split(" ");
-            for(i of tokens){
-                if(i[0]== '#'){
-                    const topic = await topico.getTopic(i);
-                    if(!Array.isArray(topic.rows) || !topic.rows.length){
-                        await topico.createTopic(i);
-                    }
-                    await topico.createTopicPost(i, values[0])
+            let regexHashTag = /#(\w+)/g;
+            hashtags = user.texto.match(regexHashTag);
+            for(i in hashtags){
+                console.log(hashtags[i]);
+                const topic = await topico.getTopic(hashtags[i]);
+                if(!Array.isArray(topic.rows) || !topic.rows.length){
+                    await topico.createTopic(hashtags[i]);
                 }
+                await topico.createTopicPost(hashtags[i], values[0]);
             }
             const photoPath = "post/foto/" + idFoto + ".png";
             const newPost2 = "INSERT INTO foto (idFoto, urlFoto, idPost) VALUES ($1, $2, $3)";
