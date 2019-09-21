@@ -10,13 +10,30 @@ router.post('/createpost', async  (req, res) => {
     if(req.session.user){
         user = req.body;
         date = new Date();
-        command = "INSERT INTO post (idPost, idUser, idFoto, texto, datestamp) VALUES ($1, $2, $3, $4, $5)";
-        values = [uuidv1(), req.session.userId, user.idFoto, user.texto, date];
+        try {
+            const newPost = "INSERT INTO post (idPost, idUser, idFoto, texto, datestamp) VALUES ($1, $2, $3, $4, $5)";
+            values = [uuidv1(), req.session.userId, user.idFoto, user.texto, date];
+    
+            const  post = await db.query(newPost, values); 
+            tokens = user.texto.split(" ");
+            for(i of tokens){
+                if(i[0]== '#'){
+                    const  getTopic = "SELECT * FROM topico WHERE hashtag = $1";
+                    const topic = await db.query(getTopic, [i]);
 
-        await db.query(command, values).then(() => res.send("Post created")).catch((err) => {
-            res.send(`Error when creating post`)
-            console.log(err);
-        });
+                    if(!Array.isArray(topic.rows) || !topic.rows.length){
+                        const createTopic = "INSERT INTO topico (hashtag) VALUES ($1)";
+                        const {newTopic} = await db.query(createTopic, [i]);
+                    }
+
+                    const topicoPost = "INSERT INTO topico_post (idPost, hashtag) VALUES ($1, $2)";
+                    const {newTopicoPost} = await db.query(topicoPost, [values[0], i]);
+                }
+            }
+            res.send("Post criado com sucesso."); return;
+        } catch (error) {
+            res.send(error); return;
+        } 
     }else{
         res.send("Not logged in"); return;
     }
