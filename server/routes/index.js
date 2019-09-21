@@ -7,7 +7,5 @@ module.exports = app => {
   app.use('/users', users);
   app.use('/auth', auth);
   app.use('/posts', post);
-  app.use('/photos', photo)
-
   // etc..
 }

@@ -6,7 +6,7 @@ const router = new Router()
 
 module.exports = router
 
-router.post('/createpost', async  (req, res) => {
+router.post('/create', async  (req, res) => {
     if(req.session.user){
         user = req.body;
         date = new Date();
@@ -15,15 +15,17 @@ router.post('/createpost', async  (req, res) => {
             values = [uuidv1(), req.session.userId, user.idFoto, user.texto, date];
     
             const  post = await db.query(newPost, values); 
+            let regexHashTag = /#(\w+)/g;
+            hashtags = user.texto.match(regexHashTag);
+            console.log(hashtags);
             tokens = user.texto.split(" ");
-            for(i of tokens){
-                if(i[0]== '#'){
-                    const topic = await topico.getTopic(i);
-                    if(!Array.isArray(topic.rows) || !topic.rows.length){
-                        await topico.createTopic(i);
-                    }
-                    await topico.createTopicPost(i, values[0])
+            for(i in hashtags){
+                console.log(hashtags[i]);
+                const topic = await topico.getTopic(hashtags[i]);
+                if(!Array.isArray(topic.rows) || !topic.rows.length){
+                    await topico.createTopic(hashtags[i]);
                 }
+                await topico.createTopicPost(hashtags[i], values[0]);
             }
             res.send("Post criado com sucesso."); return;
         } catch (error) {
