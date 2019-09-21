@@ -8,7 +8,7 @@ module.exports = router
 router.post("/login", async (req, res) => {
     const query = `SELECT * FROM usuario WHERE username = '${req.body.username}';`;
     if(req.session.user) {res.send("Already Logged in"); return};
-    db.query(query, []).then((row) => {
+    db.query(query, []).then((row) => { 
         if(!Array.isArray(row.rows) || !row.rows.length) {
             throw new Error("User not found"); return
         };

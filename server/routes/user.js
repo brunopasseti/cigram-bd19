@@ -32,6 +32,6 @@ router.get('/:username', async  (req, res) => {
         let result = {username, nomereal, biografia, privacidade};
         res.send(result);
     }).catch((err) => {
-        res.send(`${err}`);
+        res.status(404).send(`${err}`);
     });
 })
