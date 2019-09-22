@@ -62,8 +62,8 @@ router.get('/', async(req,res) =>{
     });
 });
 
-router.get("/:user", async (req, res) => {
-    const user = req.params.user;
+router.get("/user/:username", async (req, res) => {
+    const user = req.params.username;
 
     const query = `SELECT id FROM usuario WHERE username = '${user}';`;
 
@@ -140,3 +140,15 @@ router.post("/coments", async(req,res) =>{
         res.status(403).send("Not logged in");
     }
 });
+
+router.get("/timeline", async (req,res) =>{
+    if(req.session.user){
+        query = `SELECT post.idPost, post.idUser, post.idFoto, post.texto, post.datestamp FROM post INNER JOIN seguindo ON post.idUser = seguindo.idSeguido WHERE seguindo.idUser = '${req.session.userId}' ORDER BY datestamp DESC`;
+        await db.query(query, []).then((row)=>{res.send(row.rows)}).catch((err)=>{
+            console.log(err)
+            res.status(400).send(err);
+        })    
+    }else{
+        res.status(403).send("Not logged in");
+    }
+})
