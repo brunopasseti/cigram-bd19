@@ -34,3 +34,14 @@ router.get('/', async  (req, res) => {
         res.status(404).send(`${err}`);
     });
 })
+
+router.get('/search', async  (req, res) => {
+    if(req.session.user){
+        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario WHERE usuario.id != '${req.session.userId}' AND usuario.username LIKE '%${req.body.pattern}%' OR usuario.nomereal LIKE '%${req.body.pattern}%' or usuario.biografia LIKE '%${req.body.pattern}%'`;
+        await db.query(findUser , []).then((row) => res.send(row.rows)).catch((err)=>{
+            res.status(400).send(err);
+        });
+    }else{
+        res.status(403).send("Not logged in")
+    }
+})
