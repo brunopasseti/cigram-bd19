@@ -58,7 +58,6 @@ router.post('/', async  (req, res) => {
 *   Params: user 
 *
 ***************************************************/
-
 router.get("/user/:username", async (req, res) => {
     const user = req.params.username;
 
