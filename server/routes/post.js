@@ -15,13 +15,17 @@ router.post('/', async  (req, res) => {
             const idFoto = uuidv1();
             const newPost = "INSERT INTO post (idPost, idUser, idFoto, texto, datestamp) VALUES ($1, $2, $3, $4, $5)";
             values = [idPost, req.session.userId, idFoto, user.texto, date];
+            const photoPath = "post/foto/" + idFoto + ".png";
+            const newPost2 = "INSERT INTO foto (idFoto, urlFoto) VALUES ($1, $2)";
+            values2 = [idFoto, photoPath];
+    
+            const post2 = await db.query(newPost2, values2).catch((err)=> console.log("Erro na primeira requisição,", err)); 
     
             const  post = await db.query(newPost, values); 
             let regexHashTag = /#(\w+)/g;
             hashtags = user.texto.match(regexHashTag);
             if(hashtags != null && hashtags.length){
                 for(i in hashtags){
-                    console.log(hashtags[i]);
                     const topic = await topico.getTopic(hashtags[i]);
                     if(!Array.isArray(topic.rows) || !topic.rows.length){
                         await topico.createTopic(hashtags[i]);
@@ -29,11 +33,7 @@ router.post('/', async  (req, res) => {
                     await topico.createTopicPost(hashtags[i], values[0]);
                 }
             }
-            const photoPath = "post/foto/" + idFoto + ".png";
-            const newPost2 = "INSERT INTO foto (idFoto, urlFoto, idPost) VALUES ($1, $2, $3)";
-            values2 = [idFoto, photoPath, idPost];
-    
-            const  post2 = await db.query(newPost2, values2); 
+
             res.send("Post e foto criados com sucesso."); return;
         } catch (error) {
             res.send(error); return;
@@ -52,14 +52,40 @@ router.get('/', async(req,res) =>{
             throw new Error("User not found"); return
         };
         const user = row.rows[0];
-
+        if(req.session.user !== data.username && privacidade == true)
+            res.status(401).send({username, privacidade:true});
         const query = "SELECT * FROM post WHERE idUser = $1 ORDER BY datestamp DESC"
         db.query(query, [user.id], []).then((row) => res.send(row.rows)).catch((err)=>{
-            res.send(`${err}`);
+            res.status(403).send(`${err}`);
             console.log(err);
         })
     }).catch((err) => {
         res.send(`${err}`);
+    });
+});
+
+router.get("/:user", async (req, res) => {
+    const user = req.params.user;
+
+    const query = `SELECT id FROM usuario WHERE username = '${user}';`;
+
+    await db.query(query, []).then((row) => {
+        // Checking if array is empty:
+        if(!Array.isArray(row.rows) || !row.rows.length) {
+            throw new Error("User not found");
+        };
+        let {id} =  row.rows[0];
+
+        db.query(`Select * FROM post WHERE iduser = '${id}' ORDER BY datestamp DESC`, []).then((row) => {
+            if(!Array.isArray(row.rows) || !row.rows.length) {
+                throw new Error("Posts not found");
+            };
+            res.send(JSON.stringify(row.rows));
+        }).catch((err) => {
+            res.status(404).send(`${err}`);
+        });
+    }).catch((err) => {
+        res.status(404).send(`${err}`);
     });
 });
 

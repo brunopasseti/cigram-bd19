@@ -5,7 +5,7 @@ const router = new Router()
 
 module.exports = router
 
-router.post('/', async (req, res) => {
+router.post('/login', async (req, res) => {
     const query = `SELECT * FROM usuario WHERE username = '${req.body.username}';`;
     if(req.session.user) {res.send("Already Logged in"); return};
     db.query(query, []).then((row) => { 
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
     });
 });
 
-router.get('/', async (req, res) => {
+router.get('/logout', async (req, res) => {
     if(!req.session.user) {res.send("Already Logged out"); return};
     req.session.destroy();
     res.send("Logged out");

@@ -16,7 +16,7 @@ router.post('/', async  (req, res) => {
     });
 })
 
-router.get('/', async  (req, res) => {
+router.get('/:username', async  (req, res) => {
     const { username } = req.params;
 
     const query = `SELECT * FROM usuario WHERE username = '${username}';`;
@@ -27,7 +27,7 @@ router.get('/', async  (req, res) => {
         };
         let {username, nomereal, biografia, privacidade} =  row.rows[0]
         if(req.session.user !== username && privacidade == true)
-            res.send({username, privacidade:true});
+            res.status(403).send({username, privacidade:true});
         let result = {username, nomereal, biografia, privacidade};
         res.send(result);
     }).catch((err) => {
