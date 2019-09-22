@@ -6,7 +6,16 @@ const router = new Router()
 
 module.exports = router
 
-router.post('/', async  (req, res) => {
+/********************************************************************************
+*
+*   Create a user
+*   Method: POST
+*   Payload Type: json 
+*   Payload Content: email, username, senha, nomereal, biografia, privacidade
+*
+*********************************************************************************/
+
+router.post('/create', async  (req, res) => {
     user = req.body;
     command = "INSERT INTO usuario (ID, email, username, senha, nomereal, biografia, privacidade) VALUES ($1, $2, $3, $4, $5, $6, $7)";
     values = [uuidv1(), user.email, user.username, user.senha, user.nomereal, user.biografia, user.privacidade];
@@ -15,6 +24,15 @@ router.post('/', async  (req, res) => {
         res.status(400).send(`Error when creating users`)
     });
 })
+
+
+/*************************************************
+*
+*   Search users by username
+*   Method: GET
+*   Params: username
+*
+***************************************************/
 
 router.get('/:username', async  (req, res) => {
     const { username } = req.params;
@@ -35,9 +53,18 @@ router.get('/:username', async  (req, res) => {
     });
 })
 
-router.get('/search', async  (req, res) => {
+/*************************************************
+*
+*   Search users by pattern
+*   Method: GET
+*   Params: pattern
+*
+*********************************************************/
+
+router.get('/search/:pattern', async  (req, res) => {
+    const pattern = req.params.pattern;
     if(req.session.user){
-        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario WHERE usuario.id != '${req.session.userId}' AND usuario.username LIKE '%${req.body.pattern}%' OR usuario.nomereal LIKE '%${req.body.pattern}%' or usuario.biografia LIKE '%${req.body.pattern}%'`;
+        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario WHERE usuario.id != '${req.session.userId}' AND usuario.username LIKE '%${pattern}%' OR usuario.nomereal LIKE '%${pattern}%' or usuario.biografia LIKE '%${pattern}%'`;
         await db.query(findUser , []).then((row) => res.send(row.rows)).catch((err)=>{
             res.status(400).send(err);
         });
