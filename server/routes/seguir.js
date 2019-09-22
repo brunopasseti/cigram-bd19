@@ -8,7 +8,7 @@ router.post('/seguir', async (req,res) => {
     if(req.session.user){
         target = req.body;
         const command = "SELECT * FROM usuario WHERE username = $1";
-        db.query(command, [target.username],[]).then((row) => { 
+        db.query(command, [target.username],[]).then(async (row) =>  { 
             if(!Array.isArray(row.rows) || !row.rows.length) {
                 throw new Error("User not found"); return
             };
