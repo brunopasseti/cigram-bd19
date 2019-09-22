@@ -12,15 +12,16 @@ router.post('/', async  (req, res) => {
         date = new Date();
         try {
             const idPost = uuidv1();
-            const idFoto = uuidv1();
+            values2 = 0;
+            if(user.resfoto){
+                idfoto = uuidv1()
+                const photoPath = "post/foto/" + idFoto + ".png";
+                values2 = [idfoto, photoPath];
+                const newPost2 = "INSERT INTO foto (idFoto, urlFoto) VALUES ($1, $2)";
+                const post2 = await db.query(newPost2, values2).catch((err)=> console.log("Erro na primeira requisição,", err)); 
+            }
             const newPost = "INSERT INTO post (idPost, idUser, idFoto, texto, datestamp) VALUES ($1, $2, $3, $4, $5)";
-            values = [idPost, req.session.userId, idFoto, user.texto, date];
-            const photoPath = "post/foto/" + idFoto + ".png";
-            const newPost2 = "INSERT INTO foto (idFoto, urlFoto) VALUES ($1, $2)";
-            values2 = [idFoto, photoPath];
-    
-            const post2 = await db.query(newPost2, values2).catch((err)=> console.log("Erro na primeira requisição,", err)); 
-    
+            values = [idPost, req.session.userId, values2[0], user.texto, date];
             const  post = await db.query(newPost, values); 
             let regexHashTag = /#(\w+)/g;
             hashtags = user.texto.match(regexHashTag);
@@ -30,10 +31,10 @@ router.post('/', async  (req, res) => {
                     await topico.createTopicPost(hashtags[i], values[0]);
                 }
             }
-
-            res.send("Post e foto criados com sucesso."); return;
+            res.send("Post criado com sucesso."); return;
         } catch (error) {
-            res.send(error); return;
+            console.log(error)
+            res.status(400).send(error); return;
         } 
     }else{
         res.status(403).send("Not logged in"); return;
