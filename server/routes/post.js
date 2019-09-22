@@ -6,6 +6,16 @@ const router = new Router()
 
 module.exports = router
 
+/********************************************************
+*
+*   Create a post
+*   Method: POST
+*   Payload Type: json 
+*   Payload Content: withPhoto, texto
+*   OBS: User in session is the user creating the post
+*
+*********************************************************/
+
 router.post('/', async  (req, res) => {
     if(req.session.user){
         user = req.body;
@@ -13,7 +23,7 @@ router.post('/', async  (req, res) => {
         try {
             const idPost = uuidv1();
             values2 = 0;
-            if(user.resfoto){
+            if(user.withPhoto){
                 idfoto = uuidv1()
                 const photoPath = "post/foto/" + idFoto + ".png";
                 values2 = [idfoto, photoPath];
@@ -49,8 +59,8 @@ router.post('/', async  (req, res) => {
 *
 ***************************************************/
 
-router.get("/:user", async (req, res) => {
-    const user = req.params.user;
+router.get("/user/:username", async (req, res) => {
+    const user = req.params.username;
 
     const query = `SELECT id,privacidade FROM usuario WHERE username = '${user}';`;
     if (!req.session.user) res.status(403).send("Not logged in");
