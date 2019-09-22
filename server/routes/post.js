@@ -26,10 +26,7 @@ router.post('/', async  (req, res) => {
             hashtags = user.texto.match(regexHashTag);
             if(hashtags != null && hashtags.length){
                 for(i in hashtags){
-                    const topic = await topico.getTopic(hashtags[i]);
-                    if(!Array.isArray(topic.rows) || !topic.rows.length){
-                        await topico.createTopic(hashtags[i]);
-                    }
+                    await topico.createTopic(hashtags[i]);
                     await topico.createTopicPost(hashtags[i], values[0]);
                 }
             }
@@ -101,13 +98,11 @@ router.post('/coment', async  (req, res) => {
 
             let regexHashTag = /#(\w+)/g;
             hashtags = user.texto.match(regexHashTag);
+
             if(hashtags != null && hashtags.length){
                 for(i of hashtags){
                     if(i[0]== '#'){
-                        const topic = await topico.getTopic(i);
-                        if(!Array.isArray(topic.rows) || !topic.rows.length){
-                            await topico.createTopic(i);
-                        }
+                        await topico.createTopic(i);
                         await topico.createTopicComent(i, values[0])
                     }
                 }
@@ -122,7 +117,7 @@ router.post('/coment', async  (req, res) => {
     } 
 })
 
-router.get("/coments", async(req,res) =>{
+router.post("/coments", async(req,res) =>{
     data = req.body;
     if(req.session.user){
         const command = "SELECT * FROM post WHERE idPost = $1";

@@ -8,8 +8,8 @@ module.exports = {
     },
 
     createTopic: async function(hashtag){
-        const createTopic = "INSERT INTO topico (hashtag) VALUES ($1)";
-        return await db.query(createTopic, [hashtag]);
+        const createTopic = `INSERT INTO topico (hashtag) SELECT '${hashtag}' WHERE NOT EXISTS (SELECT * FROM topico WHERE topico.hashtag = '${hashtag}')`;
+        return await db.query(createTopic);
     },
 
     createTopicPost: async function(hashtag, idPost){
