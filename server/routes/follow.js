@@ -47,3 +47,14 @@ router.get('/un/:username', async (req, res) => {
     });
 });
 
+router.get('/followers', async (req,res) => {
+    if(req.session.user){
+        const command = "SELECT * FROM seguindo WHERE idUser = $1";
+        db.query(command, req.session.userId, []).then((row) => res.send(row.rows)).catch((err)=>{
+            res.send(`${err}`);
+            console.log(err);
+        })
+    }else{
+        res.status(403).send("Not logged in"); return;
+    }
+})
