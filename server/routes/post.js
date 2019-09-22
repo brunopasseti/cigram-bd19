@@ -6,6 +6,16 @@ const router = new Router()
 
 module.exports = router
 
+/********************************************************
+*
+*   Create a post
+*   Method: POST
+*   Payload Type: json 
+*   Payload Content: withPhoto, texto
+*   OBS: User in session is the user creating the post
+*
+*********************************************************/
+
 router.post('/', async  (req, res) => {
     if(req.session.user){
         user = req.body;
@@ -13,7 +23,7 @@ router.post('/', async  (req, res) => {
         try {
             const idPost = uuidv1();
             values2 = 0;
-            if(user.resfoto){
+            if(user.withPhoto){
                 idfoto = uuidv1()
                 const photoPath = "post/foto/" + idFoto + ".png";
                 values2 = [idfoto, photoPath];
@@ -41,39 +51,27 @@ router.post('/', async  (req, res) => {
     }
 })
 
-router.get('/', async(req,res) =>{
-    data = req.body;
-    const command = "SELECT * FROM usuario WHERE username = $1";
-    
-    db.query(command, [data.username],[]).then((row) => { 
-        if(!Array.isArray(row.rows) || !row.rows.length) {
-            throw new Error("User not found"); return
-        };
-        const user = row.rows[0];
-        if(req.session.user !== data.username && privacidade == true)
-            res.status(401).send({username, privacidade:true});
-        const query = "SELECT * FROM post WHERE idUser = $1 ORDER BY datestamp DESC"
-        db.query(query, [user.id], []).then((row) => res.send(row.rows)).catch((err)=>{
-            res.status(403).send(`${err}`);
-            console.log(err);
-        })
-    }).catch((err) => {
-        res.send(`${err}`);
-    });
-});
+/*************************************************
+*
+*   Search posts from user
+*   Method: GET
+*   Params: user 
+*
+***************************************************/
 
 router.get("/user/:username", async (req, res) => {
     const user = req.params.username;
 
-    const query = `SELECT id FROM usuario WHERE username = '${user}';`;
-
+    const query = `SELECT id,privacidade FROM usuario WHERE username = '${user}';`;
+    if (!req.session.user) res.status(403).send("Not logged in");
     await db.query(query, []).then((row) => {
         // Checking if array is empty:
         if(!Array.isArray(row.rows) || !row.rows.length) {
             throw new Error("User not found");
         };
-        let {id} =  row.rows[0];
-
+        let {id, privacidade} =  row.rows[0];
+        if(req.session.user !== data.username && privacidade == true)
+            res.status(401).send({username, privacidade:true});
         db.query(`Select * FROM post WHERE iduser = '${id}' ORDER BY datestamp DESC`, []).then((row) => {
             if(!Array.isArray(row.rows) || !row.rows.length) {
                 throw new Error("Posts not found");
@@ -86,6 +84,16 @@ router.get("/user/:username", async (req, res) => {
         res.status(404).send(`${err}`);
     });
 });
+
+/*************************************************
+*
+*   Make a coment in a Post
+*   Method: POST
+*   Payload Type: json 
+*   Payload Content: idPost, texto
+*   OBS: User in session is the user commenting
+*
+***************************************************/
 
 router.post('/coment', async  (req, res) => {
     if(req.session.user){
@@ -118,6 +126,14 @@ router.post('/coment', async  (req, res) => {
     } 
 })
 
+/******************************************
+*
+*   Getting Coments in Post
+*   Method: POST
+*   Payload Type: json 
+*   Payload Content: idPost
+*
+*******************************************/
 router.post("/coments", async(req,res) =>{
     data = req.body;
     if(req.session.user){
