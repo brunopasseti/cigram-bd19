@@ -2,6 +2,8 @@ const Router = require('express-promise-router')
 const db = require('../db')
 const uuidv1 = require('uuid/v1')
 const topico = require("../util/topicos")
+const notification = require("../util/notification")
+const seguir = require('../routes/seguir')
 const router = new Router()
 
 module.exports = router
@@ -31,6 +33,11 @@ router.post('/', async  (req, res) => {
                     await topico.createTopicPost(hashtags[i], values[0]);
                 }
             }
+            const idNot = uuidv1();
+            //ATENCAO FAZER UM "await notificacao.notifyUser" e aviso COM TODOS OS SEGUIDORES DE REQ.SESSION
+            await notificacao.notificacaoPost(idNot, idPost)
+            
+            
             res.send("Post criado com sucesso."); return;
         } catch (error) {
             console.log(error)
@@ -43,48 +50,53 @@ router.post('/', async  (req, res) => {
 
 router.get('/', async(req,res) =>{
     data = req.body;
-    const command = "SELECT * FROM usuario WHERE username = $1";
-    
-    db.query(command, [data.username],[]).then((row) => { 
-        if(!Array.isArray(row.rows) || !row.rows.length) {
-            throw new Error("User not found"); return
-        };
-        const user = row.rows[0];
-        if(req.session.user !== data.username && privacidade == true)
-            res.status(401).send({username, privacidade:true});
-        const query = "SELECT * FROM post WHERE idUser = $1 ORDER BY datestamp DESC"
-        db.query(query, [user.id], []).then((row) => res.send(row.rows)).catch((err)=>{
-            res.status(403).send(`${err}`);
-            console.log(err);
-        })
-    }).catch((err) => {
-        res.send(`${err}`);
-    });
+    if(req.session.user){
+        const command = "SELECT * FROM usuario WHERE username = $1";
+        db.query(command, [data.username],[]).then((row) => { 
+            if(!Array.isArray(row.rows) || !row.rows.length) {
+                throw new Error("User not found"); return
+            };
+            const user = row.rows[0];
+            if(req.session.user !== data.username && privacidade == true)
+                res.status(401).send({username, privacidade:true});
+            const query = "SELECT * FROM post WHERE idUser = $1 ORDER BY datestamp DESC"
+            db.query(query, [user.id], []).then((row) => res.send(row.rows)).catch((err)=>{
+                res.status(403).send(`${err}`);
+                console.log(err);
+            })
+        }).catch((err) => {
+            res.send(`${err}`);
+        });
+    }else{
+    res.status(403).send("Not logged in"); return;
+    }
 });
 
 router.get("/:user", async (req, res) => {
     const user = req.params.user;
-
-    const query = `SELECT id FROM usuario WHERE username = '${user}';`;
-
-    await db.query(query, []).then((row) => {
-        // Checking if array is empty:
-        if(!Array.isArray(row.rows) || !row.rows.length) {
-            throw new Error("User not found");
-        };
-        let {id} =  row.rows[0];
-
-        db.query(`Select * FROM post WHERE iduser = '${id}' ORDER BY datestamp DESC`, []).then((row) => {
+    if(req.session.user){
+        const query = `SELECT id FROM usuario WHERE username = '${user}';`;
+        await db.query(query, []).then((row) => {
+            // Checking if array is empty:
             if(!Array.isArray(row.rows) || !row.rows.length) {
-                throw new Error("Posts not found");
+                throw new Error("User not found");
             };
-            res.send(JSON.stringify(row.rows));
+            let {id} =  row.rows[0];
+
+            db.query(`Select * FROM post WHERE iduser = '${id}' ORDER BY datestamp DESC`, []).then((row) => {
+                if(!Array.isArray(row.rows) || !row.rows.length) {
+                    throw new Error("Posts not found");
+                };
+                res.send(JSON.stringify(row.rows));
+            }).catch((err) => {
+                res.status(404).send(`${err}`);
+            });
         }).catch((err) => {
             res.status(404).send(`${err}`);
         });
-    }).catch((err) => {
-        res.status(404).send(`${err}`);
-    });
+    }else{
+        res.status(403).send("Not logged in"); return;
+    }
 });
 
 router.post('/coment', async  (req, res) => {
@@ -92,8 +104,9 @@ router.post('/coment', async  (req, res) => {
         user = req.body;
         date = new Date();
         try {
+            const idComent = uuidv1();
             const newComent = "INSERT INTO comentario (idComent, idPost, idComentador, texto, time) VALUES ($1, $2, $3, $4, $5)";
-            values = [uuidv1(), user.idPost,req.session.userId, user.texto, date];
+            values = [idComent, user.idPost,req.session.userId, user.texto, date];
 
             const  coment = await db.query(newComent, values); 
 
@@ -108,6 +121,13 @@ router.post('/coment', async  (req, res) => {
                     }
                 }
             }
+            const idNot = uuidv1();
+            const userReceivingText = "SELECT idUser FROM post WHERE idPost = $1";
+            const userReceiving = await db.query(userReceivingText, user.idPost);
+            await notificacao.notifyUser(idNot, "comentario", req.session.userId, userReceiving)
+            await notificacao.notificacaoComentario(idNot, idComent)
+            const avisoText = "INSERT INTO aviso (idNot, idUser) VALUES ($1, $2)";
+            const aviso = await db.query(idNot, userReceiving);
             res.send("Comentário criado com sucesso."); return;
         } catch (error) {
             console.log(error)
@@ -118,7 +138,7 @@ router.post('/coment', async  (req, res) => {
     } 
 })
 
-router.post("/coments", async(req,res) =>{
+router.get("/coments", async(req,res) =>{
     data = req.body;
     if(req.session.user){
         const command = "SELECT * FROM post WHERE idPost = $1";
