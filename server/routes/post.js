@@ -3,7 +3,7 @@ const db = require('../db')
 const uuidv1 = require('uuid/v1')
 const topico = require("../util/topicos")
 const notification = require("../util/notification")
-const seguir = require('../routes/seguir')
+const utilUser = require("../util/user");
 const router = new Router()
 
 module.exports = router
@@ -37,15 +37,39 @@ router.post('/', async  (req, res) => {
             const  post = await db.query(newPost, values); 
             let regexHashTag = /#(\w+)/g;
             hashtags = user.texto.match(regexHashTag);
+            let regexMentions = /\B@[a-z0-9_-]+/gi;
+            let mentions = user.texto.match(regexMentions);
+            if(mentions)
+                mentions = mentions.map((item) => item.substring(1));
+            if(hashtags)
+                hashtags = hashtags.map((item) => item.substring(1));
+            hashtags = [... new Set(hashtags)]
+            mentions = [... new Set(mentions)]
             if(hashtags != null && hashtags.length){
-                for(i in hashtags){
-                    await topico.createTopic(hashtags[i]);
-                    await topico.createTopicPost(hashtags[i], values[0]);
+                for(i of hashtags){
+                    await topico.createTopic(i);
+                    await topico.createTopicPost(i, values[0])
                 }
             }
-            const idNot = uuidv1();
-            //ATENCAO FAZER UM "await notificacao.notifyUser" e aviso COM TODOS OS SEGUIDORES DE REQ.SESSION
-            await notificacao.notificacaoPost(idNot, idPost)
+            // Faz a notificação
+            for( mention of mentions ){
+                // if(await utilUser.userExist(mention)){
+                let uuid = uuidv1();
+                db.query(`INSERT INTO notificacao (idnot, tipo, sujeito, objeto, time) VALUES ($1, $2, $3, (SELECT id FROM usuario WHERE usuario.username = '${mention}' ), $4)`, [uuid, "marcouPost", req.session.userId, new Date()]).then((row) => {
+                    db.query(`INSERT INTO notificacao_post (idnot, idpost) VALUES ($1, $2)`, [uuid, idPost]).then((row) => {
+                    }).catch(err => {
+                        console.log(err);
+                    });
+                }).catch(err => {
+                    if(err.code === '23502'){
+                        return;
+                    }else{
+                        console.log(err);
+                    }
+                });
+
+            }
+
             
             
             res.send("Post criado com sucesso."); return;
@@ -69,29 +93,21 @@ router.get("/user/:username", async (req, res) => {
     const user = req.params.username;
 
     const query = `SELECT id,privacidade FROM usuario WHERE username = '${user}';`;
-    if (!req.session.user){
+    if (req.session.user){
         await db.query(query, []).then((row) =>{
             // Checking if array is empty:
             if(!Array.isArray(row.rows) || !row.rows.length) {
                 throw new Error("User not found");
             };
             let {id, privacidade} =  row.rows[0];
-            if(req.session.user !== data.username && privacidade == true)
+            if(req.session.user !== user && privacidade == true)
                 res.status(401).send({username, privacidade:true});
-            db.query(`Select * FROM post WHERE iduser = '${id}' ORDER BY datestamp DESC`, []).then((row) => {
+            db.query(`Select * FROM post WHERE iduser = $1 ORDER BY datestamp DESC`, [id]).then((row) => {
                 if(!Array.isArray(row.rows) || !row.rows.length) {
                     throw new Error("User not found");
                 };
-                let {id} =  row.rows[0];
+                res.send(row.rows);
 
-                db.query(`Select * FROM post WHERE iduser = '${id}' ORDER BY datestamp DESC`, []).then((row) => {
-                    if(!Array.isArray(row.rows) || !row.rows.length) {
-                        throw new Error("Posts not found");
-                    };
-                    res.send(JSON.stringify(row.rows));
-                    }).catch((err) => {
-                        res.status(404).send(`${err}`);
-                    });
             }).catch((err) => {
                 res.status(404).send(`${err}`);
             })
@@ -120,26 +136,43 @@ router.post('/coment', async  (req, res) => {
             const newComent = "INSERT INTO comentario (idComent, idPost, idComentador, texto, time) VALUES ($1, $2, $3, $4, $5)";
             values = [idComent, user.idPost,req.session.userId, user.texto, date];
 
-            const  coment = await db.query(newComent, values); 
+            const  coment = db.query(newComent, values); 
 
             let regexHashTag = /#(\w+)/g;
             hashtags = user.texto.match(regexHashTag);
-
+            let regexMentions = /\B@[a-z0-9_-]+/gi;
+            let mentions = user.texto.match(regexMentions);
+            if(mentions)
+                mentions = mentions.map((item) => item.substring(1));
+            if(hashtags)
+                hashtags = hashtags.map((item) => item.substring(1));
+            hashtags = [... new Set(hashtags)]
+            mentions = [... new Set(mentions)]
             if(hashtags != null && hashtags.length){
                 for(i of hashtags){
-                    if(i[0]== '#'){
-                        await topico.createTopic(i);
-                        await topico.createTopicComent(i, values[0])
-                    }
+                    await topico.createTopic(i);
+                    await topico.createTopicComent(i, values[0])
                 }
             }
-            const idNot = uuidv1();
-            const userReceivingText = "SELECT idUser FROM post WHERE idPost = $1";
-            const userReceiving = await db.query(userReceivingText, user.idPost);
-            await notificacao.notifyUser(idNot, "comentario", req.session.userId, userReceiving)
-            await notificacao.notificacaoComentario(idNot, idComent)
-            const avisoText = "INSERT INTO aviso (idNot, idUser) VALUES ($1, $2)";
-            const aviso = await db.query(idNot, userReceiving);
+            // Faz a notificação
+            for( mention of mentions ){
+                // if(await utilUser.userExist(mention)){
+                let uuid = uuidv1();
+                db.query(`INSERT INTO notificacao (idnot, tipo, sujeito, objeto, time) VALUES ($1, $2, $3, (SELECT id FROM usuario WHERE usuario.username = '${mention}' ), $4)`, [uuid, "marcouPost", req.session.userId, new Date()]).then((row) => {
+                    db.query(`INSERT INTO notificacao_comentario (idnot, idcoment) VALUES ($1, $2)`, [uuid, idComent]).then((row) => {
+                    }).catch(err => {
+                        console.log(err);
+                    });
+                }).catch(err => {
+                    if(err.code === '23502'){
+                        return;
+                    }else{
+                        console.log(err);
+                    }
+                });
+
+            }
+
             res.send("Comentário criado com sucesso."); return;
         } catch (error) {
             console.log(error)

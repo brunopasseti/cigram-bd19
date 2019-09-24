@@ -1,5 +1,6 @@
-const Router = require('express-promise-router')
-const db = require('../db')
+const Router = require('express-promise-router');
+const db = require('../db');
+const follow = require('../util/follow');
 
 const router = new Router()
 
@@ -57,4 +58,14 @@ router.get('/followers', async (req,res) => {
     }else{
         res.status(403).send("Not logged in"); return;
     }
+})
+
+router.get('/user/:userA/:userB', async (req, res) => {
+    let result = await follow.isFollowingByUser(req.params.userA, req.params.userB);
+    res.send(result);
+})
+
+router.get('/id/:idA/:idB', async (req, res) => {
+    let result = await follow.isFollowingByID(req.params.idA, req.params.idB);
+    res.send(result);
 })

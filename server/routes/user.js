@@ -64,7 +64,7 @@ router.get('/:username', async  (req, res) => {
 router.get('/search/:pattern', async  (req, res) => {
     const pattern = req.params.pattern;
     if(req.session.user){
-        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario WHERE usuario.id != '${req.session.userId}' AND usuario.username LIKE '%${pattern}%' OR usuario.nomereal LIKE '%${pattern}%' or usuario.biografia LIKE '%${pattern}%'`;
+        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario WHERE usuario.username != '${req.session.user}' AND usuario.username LIKE '%${pattern}%' OR usuario.nomereal LIKE '%${pattern}%' or usuario.biografia LIKE '%${pattern}%'`;
         await db.query(findUser , []).then((row) => res.send(row.rows)).catch((err)=>{
             res.status(400).send(err);
         });

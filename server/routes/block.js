@@ -8,6 +8,8 @@ module.exports = router
 router.get('/b/:username', async (req, res) => {
     const username = req.params.username;
     const blocking = req.session.userId;
+    // const blocking = req.app.locals.id;
+
     if(!blocking) res.send("Not Logged");
     let query = "SELECT id FROM usuario WHERE username = $1;"
     db.query(query, [username]).then((row) => {
@@ -40,7 +42,9 @@ router.get('/b/:username', async (req, res) => {
 
 router.get('/un/:username', async (req, res) => {
     const username = req.params.username;
-    const unblocking = req.session.userId;
+    // const unblocking = req.session.userId;
+    const unblocking = req.app.locals.id;
+
     if(!unblocking) res.send("Not Logged");
     let query = "SELECT id FROM usuario WHERE username = $1;"
     db.query(query, [username]).then((row) => { 
