@@ -3,7 +3,7 @@ const db = require('../db')
 const uuidv1 = require('uuid/v1')
 const topico = require("../util/topicos")
 const notification = require("../util/notification")
-const seguir = require('../routes/seguir')
+// const seguir = require('../routes/seguir')
 const router = new Router()
 
 module.exports = router
@@ -168,7 +168,7 @@ router.post("/coments", async(req,res) =>{
                 throw new Error("Post not found"); return
             };
 
-            const query = "SELECT * FROM comentario WHERE idPost = $1 AND comentario.idComentador NOT IN (SELECT comentario.idComentador FROM comentario INNER JOIN bloquear ON comentario.idComentador = bloquear.idBloqueado WHERE bloquear.idUser = $2 UNION SELECT comentario.idComentador FROM comentario INNER JOIN bloquear ON comentario.idComentador = bloquear.idUser WHERE bloquear.idBloqueado = $2) ORDER BY time DESC;"
+            const query = "SELECT * FROM comentario WHERE idPost = $1 AND comentario.idComentador NOT IN (SELECT comentario.idComentador FROM comentario INNER JOIN bloquear ON comentario.idComentador = bloquear.idBloqueado WHERE bloquear.idUser = $2 UNION SELECT comentario.idComentador FROM comentario INNER JOIN bloquear ON comentario.idComentador = bloquear.idUser WHERE bloquear.idBloqueado = $2) ORDER BY time ASC;"
             db.query(query, [data.idPost, req.session.userId ] , []).then((row) => res.send(row.rows)).catch((err)=>{
                 res.send(`${err}`);
                 console.log(err);
@@ -190,5 +190,28 @@ router.get("/timeline", async (req,res) =>{
         })    
     }else{
         res.status(403).send("Not logged in");
+    }
+})
+
+router.get("/delete/:comment", async (req,res)=>{
+    if(req.session.user){
+        query = `DELETE FROM comentario WHERE comentario.idComent = ${req.params.comment} AND comentario.idComentador = '${req.session.userId}' OR comentario.idPost IN (SELECT post.idPost WHERE post.idUser = '${req.session.userId}')` 
+        db.query(query,[]).then(()=>res.send("Comentário excluido.")).catch((err)=>{
+            req.status(400).send(err);
+        })
+    }else{
+        req.status(403).send("Not logged in");
+    }
+})
+
+
+router.get("/delete/:post", async (req,res)=>{
+    if(req.session.user){
+        query = `DELETE FROM post WHERE post.idPost = '${req.params.post}' AND post.idUser = '${req.session.userId}'` 
+        db.query(query,[]).then(()=>res.send("Post excluido.")).catch((err)=>{
+            req.status(400).send(err);
+        })
+    }else{
+        req.status(403).send("Not logged in");
     }
 })

@@ -17,12 +17,17 @@ module.exports = router
 
 router.post('/create', async  (req, res) => {
     user = req.body;
-    command = "INSERT INTO usuario (ID, email, username, senha, nomereal, biografia, privacidade) VALUES ($1, $2, $3, $4, $5, $6, $7)";
-    values = [uuidv1(), user.email, user.username, user.senha, user.nomereal, user.biografia, user.privacidade];
+    findSpecialCharacteres = req.body.username.search(/\W/)
+    if(findSpecialCharacteres == -1){
+        command = "INSERT INTO usuario (ID, email, username, senha, nomereal, biografia, privacidade) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+        values = [uuidv1(), user.email, user.username, user.senha, user.nomereal, user.biografia, user.privacidade];
 
-    await db.query(command, values).then(() => res.send("User created")).catch((err) => {
-        res.status(400).send(`Error when creating users`)
-    });
+        await db.query(command, values).then(() => res.send("User created")).catch((err) => {
+            res.status(400).send(`Error when creating users`)
+        });
+    }else{
+        res.status(400).send("Username invalid");
+    }
 })
 
 
@@ -64,8 +69,9 @@ router.get('/:username', async  (req, res) => {
 router.get('/search/:pattern', async  (req, res) => {
     const pattern = req.params.pattern;
     if(req.session.user){
-        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario WHERE usuario.id != '${req.session.userId}' AND usuario.username LIKE '%${pattern}%' OR usuario.nomereal LIKE '%${pattern}%' or usuario.biografia LIKE '%${pattern}%'`;
+        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario INNER JOIN seguindo ON seguindo.idSeguido = usuario.id WHERE usuario.id != '${req.session.userId}' AND usuario.username LIKE '%${pattern}%' OR usuario.nomereal LIKE '%${pattern}%' or usuario.biografia LIKE '%${pattern}%' GROUP BY usuario.id ORDER BY COUNT(usuario.id) DESC`;
         await db.query(findUser , []).then((row) => res.send(row.rows)).catch((err)=>{
+            console.log(err)
             res.status(400).send(err);
         });
     }else{
