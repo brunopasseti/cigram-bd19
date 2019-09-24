@@ -69,7 +69,11 @@ router.get('/:username', async  (req, res) => {
 router.get('/search/:pattern', async  (req, res) => {
     const pattern = req.params.pattern;
     if(req.session.user){
+<<<<<<< HEAD
         const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario INNER JOIN seguindo ON seguindo.idSeguido = usuario.id WHERE usuario.id != '${req.session.userId}' AND usuario.username LIKE '%${pattern}%' OR usuario.nomereal LIKE '%${pattern}%' or usuario.biografia LIKE '%${pattern}%' GROUP BY usuario.id ORDER BY COUNT(usuario.id) DESC`;
+=======
+        const findUser = `SELECT usuario.id, usuario.username, usuario.nomereal FROM usuario WHERE usuario.username != '${req.session.user}' AND usuario.username LIKE '%${pattern}%' OR usuario.nomereal LIKE '%${pattern}%' or usuario.biografia LIKE '%${pattern}%'`;
+>>>>>>> 263d4a274f4dc5c61165322265956bb3b47decd8
         await db.query(findUser , []).then((row) => res.send(row.rows)).catch((err)=>{
             console.log(err)
             res.status(400).send(err);

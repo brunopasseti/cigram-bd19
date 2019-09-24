@@ -7,7 +7,7 @@ module.exports = router
 
 router.post('/login', async (req, res) => {
     const query = `SELECT * FROM usuario WHERE username = '${req.body.username}';`;
-    if(req.session.user) {res.send("Already Logged in"); return};
+    if(req.session.user) {res.send({status: "already"}); return};
     db.query(query, []).then((row) => { 
         if(!Array.isArray(row.rows) || !row.rows.length) {
             throw new Error("User not found"); return
@@ -16,18 +16,23 @@ router.post('/login', async (req, res) => {
         if(req.body.username == user.username && req.body.senha == user.senha){
             req.session.user = user.username;
             req.session.userId = user.id;
-            res.send("Logged in")
+            req.app.locals.user = user.username;
+            req.app.locals.id =  user.id;
+            console.log("SAVED", req.session.user);
+            res.setHeader('Access-Control-Allow-Credentials',true);
+            res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4444');
+            res.send({status:"ok"})
         }else{
-            throw new Error("Wrong credentials"); return;
+            res.send({status:"wrong"});
         }
     }).catch((err) => {
-        res.send(`${err}`);
+        res.send({status: "notfound"});
     });
 });
 
 router.get('/logout', async (req, res) => {
     if(!req.session.user) {res.send("Already Logged out"); return};
     req.session.destroy();
-    res.send("Logged out");
+    res.send({status:"ok"});
 });
 
